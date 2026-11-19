@@ -234,11 +234,13 @@ const colorsEl=document.getElementById('colors'),pagesEl=document.getElementById
 colours.forEach(([name,hex],i)=>{let b=document.createElement('button');b.className='swatch'+(!i?' active':'');b.style.background=hex;b.title=name;b.setAttribute('aria-label',name);b.onclick=()=>{chosen=hex;document.querySelectorAll('.swatch').forEach(x=>x.classList.remove('active'));b.classList.add('active')};colorsEl.append(b)});
 // Give every colouring page a little kawaii sparkle and a friendly face.
 designs.forEach((d,i)=>{
+ if(!d || typeof d!=='object') designs[i]={name:'Cute picture '+(i+1),emoji:'💖',paths:[]};
+ if(!Array.isArray(designs[i].paths)) designs[i].paths=[];
  const shift=(i%5)*2;
  const eye=(x,y)=>'M'+(x-4)+' '+y+' a4 5 0 1 0 8 0 a4 5 0 1 0 -8 0';
  const cheek=(x,y)=>'M'+(x-5)+' '+y+' a5 3 0 1 0 10 0 a5 3 0 1 0 -10 0';
- d.paths.push(eye(181+shift,218),eye(219+shift,218),cheek(163+shift,232),cheek(237+shift,232),'M190 238 Q200 248 210 238');
- if(i%2===0){d.paths.push('M200 185 Q190 174 181 183 Q175 193 200 207 Q225 193 219 183 Q210 174 200 185Z')}
+ designs[i].paths.push(eye(181+shift,218),eye(219+shift,218),cheek(163+shift,232),cheek(237+shift,232),'M190 238 Q200 248 210 238');
+ if(i%2===0) designs[i].paths.push('M200 185 Q190 174 181 183 Q175 193 200 207 Q225 193 219 183 Q210 174 200 185Z');
 });
 function renderPageList(){
  pagesEl.replaceChildren();
@@ -306,5 +308,5 @@ let conf=document.getElementById('confetti');conf.innerHTML='';for(let i=0;i<90;
 playApplause();speakPraise(phrase);
 }
 document.getElementById('again').onclick=()=>{document.getElementById('celebrate').classList.remove('show');document.getElementById('confetti').innerHTML=''};
-renderPageList();load(0);
+try{renderPageList();load(0)}catch(error){const status=document.getElementById('pageCount');if(status)status.textContent='Gallery error: '+(error&&error.message?error.message:'Please reload');console.error('Muntaha gallery failed',error)}
 </script></body></html>
