@@ -280,7 +280,7 @@ function renderPageList(){
    if(!d.paths||!d.paths.length){const art=document.createElementNS('http://www.w3.org/2000/svg','text');art.setAttribute('x','200');art.setAttribute('y','235');art.setAttribute('font-size','100');art.setAttribute('text-anchor','middle');art.textContent=d.emoji||'💖';preview.append(art)}
    const emoji=document.createElement('span');emoji.className='page-emoji';emoji.textContent=d.emoji||'💖';
    const label=document.createElement('small');label.textContent=(i+1)+'. '+d.name;
-   b.append(emoji,preview,label);b.title='Open '+d.name;b.addEventListener('click',()=>load(i));fragment.append(b);
+   b.append(preview,label);b.title='Open '+d.name;b.addEventListener('click',()=>load(i));fragment.append(b);
   }
   pagesEl.append(fragment);
   countEl.textContent='Showing '+index+' of '+designs.length+' adorable designs';
