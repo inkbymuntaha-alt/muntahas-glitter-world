@@ -14,6 +14,19 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+      - name: Validate game JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", html, re.I | re.S)
+          if not scripts:
+              raise SystemExit("No inline game script found")
+          Path("/tmp/muntaha-game.js").write_text("\n".join(scripts), encoding="utf-8")
+          print(f"Found {len(scripts)} inline script block(s)")
+          PY
+          node --check /tmp/muntaha-game.js
       - name: Publish website to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
