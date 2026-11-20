@@ -1,0 +1,18 @@
+{
+  "name": "Muntaha's Glitter World",
+  "short_name": "Glitter World",
+  "description": "A magical offline colouring studio with 512 original pages.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff0fa",
+  "theme_color": "#f7d7f1",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
