@@ -33,7 +33,7 @@ jobs:
           if (pages.slice(0, 6).map(page => page.title).join('|') !== 'Princess Palace|Unicorn Dream|Mermaid Magic|Fairy Garden|Sparkle Dress|Royal Handbag') throw new Error('Curated opening pages are incorrect');
           for (const page of pages) {
             if (!page.shapes || page.shapes.length < 10) throw new Error('Page has too few colouring regions: ' + page.id);
-            for (const shape of page.shapes) if (!/Z\\s*$/i.test(shape.d)) throw new Error('Open vector path on page ' + page.id);
+            for (const shape of page.shapes) if (!/Z\s*$/i.test(shape.d)) throw new Error('Open vector path on page ' + page.id);
           }
           console.log('Verified 512 unique pages, 512 unique vector compositions and closed paths.');
           NODE
@@ -49,8 +49,8 @@ jobs:
           html = Path("index.html").read_text(encoding="utf-8")
           app = Path("app.js").read_text(encoding="utf-8")
           css = Path("styles.css").read_text(encoding="utf-8")
-          ids = set(re.findall(r'\\bid="([^"]+)"', html))
-          used = set(re.findall(r'\\$\\("([^"]+)"\\)', app))
+          ids = set(re.findall(r'\bid="([^"]+)"', html))
+          used = set(re.findall(r'\$\("([^"]+)"\)', app))
           absent = sorted(used - ids)
           if absent:
               raise SystemExit("JavaScript refers to missing HTML IDs: " + ", ".join(absent))
