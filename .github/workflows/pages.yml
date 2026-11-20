@@ -14,46 +14,64 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-      - name: Validate game JavaScript
+      - name: Validate JavaScript syntax
+        run: |
+          node --check catalog.js
+          node --check app.js
+          node --check sw.js
+      - name: Validate all 512 vector pages
+        run: |
+          node <<'NODE'
+          global.window = global;
+          require('./catalog.js');
+          const pages = global.MuntahaCatalog;
+          if (!Array.isArray(pages) || pages.length !== 512) throw new Error('Expected exactly 512 pages');
+          const names = pages.map(page => page.title);
+          if (new Set(names).size !== 512) throw new Error('Page titles are not unique');
+          const compositions = pages.map(page => page.shapes.map(shape => shape.d).join('|'));
+          if (new Set(compositions).size !== 512) throw new Error('Page compositions are not unique');
+          if (pages.slice(0, 6).map(page => page.title).join('|') !== 'Princess Palace|Unicorn Dream|Mermaid Magic|Fairy Garden|Sparkle Dress|Royal Handbag') throw new Error('Curated opening pages are incorrect');
+          for (const page of pages) {
+            if (!page.shapes || page.shapes.length < 10) throw new Error('Page has too few colouring regions: ' + page.id);
+            for (const shape of page.shapes) if (!/Z\\s*$/i.test(shape.d)) throw new Error('Open vector path on page ' + page.id);
+          }
+          console.log('Verified 512 unique pages, 512 unique vector compositions and closed paths.');
+          NODE
+      - name: Validate page wiring and offline files
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
+          import re, json
+          required = ["index.html", "styles.css", "catalog.js", "app.js", "manifest.json", "sw.js", "icon.svg"]
+          missing = [name for name in required if not Path(name).is_file()]
+          if missing:
+              raise SystemExit("Missing release files: " + ", ".join(missing))
           html = Path("index.html").read_text(encoding="utf-8")
-          scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", html, re.I | re.S)
-          if not scripts:
-              raise SystemExit("No inline game script found")
-          Path("/tmp/muntaha-game.js").write_text("\n".join(scripts), encoding="utf-8")
-          print(f"Found {len(scripts)} inline script block(s)")
-          PY
-          node --check /tmp/muntaha-game.js
-      - name: Validate design catalogue
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-          html = Path("index.html").read_text(encoding="utf-8")
-          base = html.split("const designs=[", 1)[1].split("const extraCollections=", 1)[0]
-          base_names = re.findall(r"\{name:'([^']+)'", base)
-          extra = html.split("const extraCollections=[", 1)[1].split("function makeExtraPaths", 1)[0]
-          name_groups = re.findall(r"names:\[([^\]]+)\]", extra)
-          extra_names = [name for group in name_groups for name in re.findall(r"'([^']+)'", group)]
-          generated = html.split("const generatedDesigns500=(()=>{", 1)[1].split("function poly", 1)[0]
-          match = re.search(r"const themes=\[(.*?)\];\s*const suffix=\[(.*?)\];", generated, re.S)
-          if not match:
-              raise SystemExit("Could not inspect generated design catalogue")
-          themes = re.findall(r"\['([^']+)','[^']+'\]", match.group(1))
-          suffixes = re.findall(r"'([^']+)'", match.group(2))
-          bonus = html.split("const bonusDesigns=[", 1)[1].split("designs.push(", 1)[0]
-          bonus_names = re.findall(r"\{name:'([^']+)'", bonus)
-          all_names = base_names + extra_names + [theme + " " + suffix for theme in themes for suffix in suffixes] + bonus_names
-          colours = html.split("const colours=[", 1)[1].split("let chosen=", 1)[0]
-          colour_count = len(re.findall(r"\['[^']+','#", colours))
-          if (len(base_names), len(extra_names), len(themes), len(suffixes), len(bonus_names), len(all_names), len(set(all_names)), colour_count) != (20, 100, 38, 10, 12, 512, 512, 47):
-              raise SystemExit(f"Catalogue check failed: base={len(base_names)}, extra={len(extra_names)}, themes={len(themes)}, variations={len(suffixes)}, bonus={len(bonus_names)}, total={len(all_names)}, unique={len(set(all_names))}, colours={colour_count}")
-          if "b.append(preview,label)" not in html:
-              raise SystemExit("Design cards must show their individual artwork thumbnails")
-          print("Verified 512 uniquely named designs and 47 colours")
+          app = Path("app.js").read_text(encoding="utf-8")
+          css = Path("styles.css").read_text(encoding="utf-8")
+          ids = set(re.findall(r'\\bid="([^"]+)"', html))
+          used = set(re.findall(r'\\$\\("([^"]+)"\\)', app))
+          absent = sorted(used - ids)
+          if absent:
+              raise SystemExit("JavaScript refers to missing HTML IDs: " + ", ".join(absent))
+          for asset in ["./styles.css", "./catalog.js", "./app.js", "./manifest.json"]:
+              if asset not in html:
+                  raise SystemExit("HTML is missing asset reference " + asset)
+          for event in ["pointerdown", "pointermove", "pointerup", "pointercancel"]:
+              if event not in app:
+                  raise SystemExit("Missing pointer event: " + event)
+          if "touch-action:none" not in css.replace(" ", ""):
+              raise SystemExit("Drawing surface must disable browser touch gestures")
+          if "TODO" in html + app + css or "PLACEHOLDER" in html + app + css:
+              raise SystemExit("Placeholder marker found")
+          manifest = json.loads(Path("manifest.json").read_text(encoding="utf-8"))
+          if not manifest.get("start_url", "").startswith("./") or not manifest.get("icons"):
+              raise SystemExit("Manifest must use relative paths and include an app icon")
+          sw = Path("sw.js").read_text(encoding="utf-8")
+          for asset in ["./index.html", "./styles.css", "./catalog.js", "./app.js", "./manifest.json", "./icon.svg"]:
+              if asset not in sw:
+                  raise SystemExit("Offline cache is missing " + asset)
+          print("Verified DOM IDs, pointer handlers, responsive styles, manifest and offline assets.")
           PY
       - name: Publish website to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
