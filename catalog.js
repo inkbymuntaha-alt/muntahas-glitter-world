@@ -12,7 +12,7 @@ function heart(cx,cy,s){return `M ${cx} ${cy+s*.36} C ${cx-s*1.35} ${cy-s*.38}, 
 function petal(cx,cy,rx,ry,rot){const x=rx,y=ry;return `M ${cx} ${cy} C ${cx-x*.95} ${cy-y*.55}, ${cx-x*.7} ${cy-y*1.4}, ${cx} ${cy-y*1.55} C ${cx+x*.7} ${cy-y*1.4}, ${cx+x*.95} ${cy-y*.55}, ${cx} ${cy} Z`}
 function makeShapes(seed,kind){
  const r=rng(seed*7919+97),shapes=[];
- const add=(d,tag)=>shapes.push({id:"r"+shapes.length,d,tag:tag||"region"});
+ const add=(d,tag)=>{if(!/\\sZ\\s*$/i.test(d))d+=" Z";shapes.push({id:"r"+shapes.length,d,tag:tag||"region"})};
  const cx=250,cy=245,main=kind%12;
  if(main===0){add("M90 340 L90 190 L250 65 L410 190 L410 340 Z","castle");add("M145 190 V125 H205 V190 M295 190 V125 H355 V190");add("M215 340 V250 Q250 205 285 250 V340 Z")}
  else if(main===1){add("M250 70 C190 80 150 135 165 205 C180 270 225 300 250 350 C275 300 320 270 335 205 C350 135 310 80 250 70 Z","unicorn");add("M218 83 L250 15 L275 92 Z");add("M170 155 Q100 95 120 205 L175 225 M330 155 Q400 95 380 205 L325 225")}
