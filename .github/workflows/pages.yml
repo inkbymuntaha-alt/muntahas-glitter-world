@@ -33,7 +33,7 @@ jobs:
           if (pages.slice(0, 6).map(page => page.title).join('|') !== 'Princess Palace|Unicorn Dream|Mermaid Magic|Fairy Garden|Sparkle Dress|Royal Handbag') throw new Error('Curated opening pages are incorrect');
           for (const page of pages) {
             if (!page.shapes || page.shapes.length < 10) throw new Error('Page has too few colouring regions: ' + page.id);
-            for (const shape of page.shapes) if (!/Z\s*$/i.test(shape.d)) throw new Error('Open vector path on page ' + page.id);
+            for (const shape of page.shapes) if (!shape.d.trim().endsWith('Z')) throw new Error('Open vector path on page ' + page.id);
           }
           console.log('Verified 512 unique pages, 512 unique vector compositions and closed paths.');
           NODE
@@ -41,7 +41,8 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re, json
+          from html.parser import HTMLParser
+          import json
           required = ["index.html", "styles.css", "catalog.js", "app.js", "manifest.json", "sw.js", "icon.svg"]
           missing = [name for name in required if not Path(name).is_file()]
           if missing:
@@ -49,9 +50,20 @@ jobs:
           html = Path("index.html").read_text(encoding="utf-8")
           app = Path("app.js").read_text(encoding="utf-8")
           css = Path("styles.css").read_text(encoding="utf-8")
-          ids = set(re.findall(r'\bid="([^"]+)"', html))
-          used = set(re.findall(r'\$\("([^"]+)"\)', app))
-          absent = sorted(used - ids)
+          class IDParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.ids = set()
+              def handle_starttag(self, tag, attrs):
+                  self.ids.update(value for key, value in attrs if key == "id" and value)
+          parser = IDParser()
+          parser.feed(html)
+          used = set()
+          for part in app.split('$("')[1:]:
+              candidate = part.split('")', 1)[0]
+              if candidate.isidentifier():
+                  used.add(candidate)
+          absent = sorted(used - parser.ids)
           if absent:
               raise SystemExit("JavaScript refers to missing HTML IDs: " + ", ".join(absent))
           for asset in ["./styles.css", "./catalog.js", "./app.js", "./manifest.json"]:
