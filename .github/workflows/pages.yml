@@ -16,14 +16,15 @@ jobs:
         uses: actions/checkout@v4
       - name: Validate JavaScript syntax
         run: |
-          node --check catalog.js
+          node --check pages.js
+          node --check praises.js
           node --check app.js
           node --check sw.js
       - name: Validate all 512 vector pages
         run: |
           node <<'NODE'
           global.window = global;
-          require('./catalog.js');
+          require('./pages.js');
           const pages = global.MuntahaCatalog;
           if (!Array.isArray(pages) || pages.length !== 512) throw new Error('Expected exactly 512 pages');
           const names = pages.map(page => page.title);
@@ -31,11 +32,14 @@ jobs:
           const compositions = pages.map(page => page.shapes.map(shape => shape.d).join('|'));
           if (new Set(compositions).size !== 512) throw new Error('Page compositions are not unique');
           if (pages.slice(0, 6).map(page => page.title).join('|') !== 'Princess Palace|Unicorn Dream|Mermaid Magic|Fairy Garden|Sparkle Dress|Royal Handbag') throw new Error('Curated opening pages are incorrect');
+          global.window = global;
+          require("./praises.js");
+          if (!global.MuntahaPraises || global.MuntahaPraises.lines.length < 220 || new Set(global.MuntahaPraises.lines).size !== global.MuntahaPraises.lines.length) throw new Error("Praise library must contain 220+ unique lines");
           for (const page of pages) {
             if (!page.shapes || page.shapes.length < 10) throw new Error('Page has too few colouring regions: ' + page.id);
             for (const shape of page.shapes) if (!shape.d.trim().endsWith('Z')) throw new Error('Open vector path on page ' + page.id);
           }
-          console.log('Verified 512 unique pages, 512 unique vector compositions and closed paths.');
+          console.log('Verified 512 unique pages, 512 unique vector compositions, closed paths and 220+ unique praises.');
           NODE
       - name: Validate page wiring and offline files
         run: |
@@ -43,7 +47,7 @@ jobs:
           from pathlib import Path
           from html.parser import HTMLParser
           import json
-          required = ["index.html", "styles.css", "catalog.js", "app.js", "manifest.json", "sw.js", "icon.svg"]
+          required = ["index.html", "styles.css", "pages.js", "praises.js", "app.js", "manifest.json", "sw.js", "icon.svg"]
           missing = [name for name in required if not Path(name).is_file()]
           if missing:
               raise SystemExit("Missing release files: " + ", ".join(missing))
@@ -83,7 +87,7 @@ jobs:
           for dynamic_class in ["active", "selected", "open", "gallery-sentinel", "page-card", "saved-card", "glitter-stamp"]:
               if "." + dynamic_class not in css:
                   raise SystemExit("Dynamic class missing CSS rule: " + dynamic_class)
-          for asset in ["./styles.css", "./catalog.js", "./app.js", "./manifest.json"]:
+          for asset in ["./styles.css", "./pages.js", "./praises.js", "./app.js", "./manifest.json"]:
               if asset not in html:
                   raise SystemExit("HTML is missing asset reference " + asset)
           for event in ["pointerdown", "pointermove", "pointerup", "pointercancel"]:
@@ -91,13 +95,13 @@ jobs:
                   raise SystemExit("Missing pointer event: " + event)
           if "touch-action:none" not in css.replace(" ", ""):
               raise SystemExit("Drawing surface must disable browser touch gestures")
-          if "TODO" in html + app + css or "PLACEHOLDER" in html + app + css:
+          if "TODO" in html + app + css or "PLACEHOLDER" in html + app + css or "..." in html + app + css:
               raise SystemExit("Placeholder marker found")
           manifest = json.loads(Path("manifest.json").read_text(encoding="utf-8"))
           if not manifest.get("start_url", "").startswith("./") or not manifest.get("icons"):
               raise SystemExit("Manifest must use relative paths and include an app icon")
           sw = Path("sw.js").read_text(encoding="utf-8")
-          for asset in ["./index.html", "./styles.css", "./catalog.js", "./app.js", "./manifest.json", "./icon.svg"]:
+          for asset in ["./index.html", "./styles.css", "./pages.js", "./praises.js", "./app.js", "./manifest.json", "./icon.svg"]:
               if asset not in sw:
                   raise SystemExit("Offline cache is missing " + asset)
           print("Verified DOM IDs, pointer handlers, responsive styles, manifest and offline assets.")
