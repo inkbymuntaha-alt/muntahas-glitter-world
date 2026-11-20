@@ -54,10 +54,20 @@ jobs:
               def __init__(self):
                   super().__init__()
                   self.ids = set()
+                  self.classes = set()
+                  self.buttons = set()
               def handle_starttag(self, tag, attrs):
-                  self.ids.update(value for key, value in attrs if key == "id" and value)
+                  values = dict(attrs)
+                  if values.get("id"):
+                      self.ids.add(values["id"])
+                      if tag == "button":
+                          self.buttons.add(values["id"])
+                  self.classes.update(values.get("class", "").split())
           parser = IDParser()
           parser.feed(html)
+          missing_classes = sorted(name for name in parser.classes if "." + name not in css)
+          if missing_classes:
+              raise SystemExit("HTML classes missing CSS rules: " + ", ".join(missing_classes))
           used = set()
           for part in app.split('$("')[1:]:
               candidate = part.split('")', 1)[0]
@@ -67,6 +77,12 @@ jobs:
           absent = sorted(used - parser.ids - dynamic_ids)
           if absent:
               raise SystemExit("JavaScript refers to missing HTML IDs: " + ", ".join(absent))
+          unbound_buttons = sorted(name for name in parser.buttons if '$("' + name + '")' not in app)
+          if unbound_buttons:
+              raise SystemExit("Buttons without JavaScript handlers: " + ", ".join(unbound_buttons))
+          for dynamic_class in ["active", "selected", "open", "gallery-sentinel", "page-card", "saved-card", "glitter-stamp"]:
+              if "." + dynamic_class not in css:
+                  raise SystemExit("Dynamic class missing CSS rule: " + dynamic_class)
           for asset in ["./styles.css", "./catalog.js", "./app.js", "./manifest.json"]:
               if asset not in html:
                   raise SystemExit("HTML is missing asset reference " + asset)
