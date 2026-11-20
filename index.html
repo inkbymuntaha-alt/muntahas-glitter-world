@@ -13,7 +13,7 @@
 <header class="app-header">
 <h1>✨ Muntaha's Glitter World ✨</h1>
 <p>Dream it • Colour it • Make it sparkle!</p>
-<div class="top-actions"><button id="continueBtn" class="primary" type="button" hidden>💖 Continue your last picture</button><button id="galleryToggle" type="button">🖼️ My Gallery</button></div>
+<div class="top-actions"><button id="continueBtn" class="primary" type="button" hidden>💖 Continue your last picture</button><button id="cheerBtn" type="button">🎉 Cheer &amp; Praise!</button><button id="galleryToggle" type="button">🖼️ My Gallery</button></div>
 </header>
 <main class="layout">
 <aside class="panel left-panel">
@@ -30,8 +30,10 @@
 <div class="zoom-controls"><button id="zoomOut" type="button" aria-label="Zoom out">−</button><span id="zoomLabel" class="zoom-label">100%</span><button id="zoomIn" type="button" aria-label="Zoom in">+</button><button id="zoomReset" type="button">100% view</button></div>
 <div class="art-frame">
 <div id="artViewport" class="art-viewport"><svg id="artSvg" width="500" height="500" viewBox="0 0 500 500" role="img" aria-label="Colouring artwork"></svg></div>
-<div class="caption-bar">Muntaha's magical masterpiece ✨</div>
+<div class="caption-bar">Muntaha's magical masterpiece ✨<small>Your masterpiece is saved on this device.</small></div>
 </div>
+<div class="save-under-art"><button id="savePictureBtn" class="primary" type="button">↓ Save picture</button></div>
+<div id="celebrationBadge" class="celebration-badge" role="status" aria-live="polite" hidden></div>
 <div class="stage-footer"><button id="prevBtn" type="button">← Previous</button><button id="nextBtn" class="primary" type="button">Next picture →</button></div>
 </section>
 <aside class="panel right-panel">
@@ -42,7 +44,8 @@
 </aside>
 </main>
 <footer class="footer-note">Made with love, imagination and a little sparkle. Your artwork stays on this device unless you save or share it.</footer>
-<script src="./catalog.js" defer></script>
+<script src="./pages.js" defer></script>
+<script src="./praises.js" defer></script>
 <script src="./app.js" defer></script>
 </body>
 </html>
