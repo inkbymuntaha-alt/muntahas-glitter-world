@@ -63,7 +63,8 @@ jobs:
               candidate = part.split('")', 1)[0]
               if candidate.isidentifier():
                   used.add(candidate)
-          absent = sorted(used - parser.ids)
+          dynamic_ids = {"regions", "paintLayer", "gallerySentinel"}
+          absent = sorted(used - parser.ids - dynamic_ids)
           if absent:
               raise SystemExit("JavaScript refers to missing HTML IDs: " + ", ".join(absent))
           for asset in ["./styles.css", "./catalog.js", "./app.js", "./manifest.json"]:
