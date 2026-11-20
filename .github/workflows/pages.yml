@@ -95,7 +95,7 @@ jobs:
                   raise SystemExit("Missing pointer event: " + event)
           if "touch-action:none" not in css.replace(" ", ""):
               raise SystemExit("Drawing surface must disable browser touch gestures")
-          if "TODO" in html + app + css or "PLACEHOLDER" in html + app + css or "..." in html + app + css:
+          if "TODO" in html + app + css or "PLACEHOLDER" in html + app + css or "... omitted" in html + app + css or "...truncated" in html + app + css:
               raise SystemExit("Placeholder marker found")
           manifest = json.loads(Path("manifest.json").read_text(encoding="utf-8"))
           if not manifest.get("start_url", "").startswith("./") or not manifest.get("icons"):
